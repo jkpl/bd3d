@@ -51,6 +51,7 @@ fn main() {
     let mut renderer = window
         .renderer()
         .accelerated()
+        .present_vsync()
         .build().unwrap();
 
     let mut timer = sdl_context.timer().unwrap();
