@@ -10,8 +10,10 @@ use sdl2::pixels::Color;
 use sdl2::rect::Point;
 
 fn main() {
-    let width: i32 = 640;
-    let height: i32 = 480;
+    let width: i32 = 320;
+    let height: i32 = 240;
+    let window_width: i32 = 1024;
+    let window_height: i32 = 768;
 
     let world_map = vec![
         vec![1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -45,7 +47,7 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("BD 3D", width as u32, height as u32)
+        .window("BD 3D", window_width as u32, window_height as u32)
         .position_centered()
         .resizable()
         .build().unwrap();
