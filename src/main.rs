@@ -42,6 +42,33 @@ fn main() {
         vec![1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ];
 
+    let tex_size: i32 = 64;
+    let textures: Vec<Vec<u32>> = {
+        let mut tx: Vec<Vec<u32>> = Vec::with_capacity(8);
+        for _ in 0..8 {
+            let size = (tex_size * tex_size) as usize;
+            tx.push(vec![0; size]);
+        };
+        for x in 0..tex_size {
+            for y in 0..tex_size {
+                let pixel_i = (tex_size * y + x) as usize;
+                let xorcolor = ((x * 256 / tex_size) ^ (y * 256 / tex_size)) as u32;
+                let ycolor = (y * 256 / tex_size) as u32;
+                let xycolor = (y * 128 / tex_size + x * 128 / tex_size) as u32;
+                let first_mod = if x != y && x != tex_size - y { 1 } else { 0 };
+                tx[0][pixel_i] = 65536 * 254 * first_mod; //flat red texture with black cross
+                tx[1][pixel_i] = xycolor + 256 * xycolor + 65536 * xycolor; //sloped greyscale
+                tx[2][pixel_i] = 256 * xycolor + 65536 * xycolor; //sloped yellow gradient
+                tx[3][pixel_i] = xorcolor + 256 * xorcolor + 65536 * xorcolor; //xor greyscale
+                tx[4][pixel_i] = 256 * xorcolor; //xor green
+                tx[5][pixel_i] = 65536 * 192 * if x % 16 == 0 && y % 16 == 0 { 0 } else { 1 }; //red bricks
+                tx[6][pixel_i] = 65536 * ycolor; //red gradient
+                tx[7][pixel_i] = 128 + 256 * 128 + 65536 * 128; //flat grey texture
+            }
+        };
+        tx
+    };
+
     let sdl_context = sdl2::init().unwrap();
 
     let video_subsystem = sdl_context.video().unwrap();
@@ -158,24 +185,41 @@ fn main() {
             let draw_start = cmp::max(-line_height / 2 + height / 2, 0);
             let draw_end   = cmp::min( line_height / 2 + height / 2, height - 1);
 
-            let bright_mod = if side { 2 } else { 1 };
-            let dist_mod = cmp::min((perpwall_dist * 15.) as u32, 255);
-            let color_n = (255 - (dist_mod as u8)) / bright_mod;
-
-            let color = match world_map[map_x as usize][map_y as usize] {
-                1 => Color::RGB(color_n, 0, 0),
-                2 => Color::RGB(0, color_n, 0),
-                3 => Color::RGB(0, 0, color_n),
-                4 => Color::RGB(color_n, color_n, color_n),
-                _ => Color::RGB(color_n, color_n, 0),
+            let tex_num = world_map[map_x as usize][map_y as usize] - 1;
+            let wall_x = {
+                let wx = if side {
+                    pos_y + perpwall_dist * raydir_y
+                } else {
+                    pos_x + perpwall_dist * raydir_x
+                };
+                wx - wx.floor()
+            };
+            let tex_x: u32 = {
+                let tx = (wall_x * (tex_size as f32)) as i32;
+                if (side && raydir_x > 0.) || (!side && raydir_y < 0.) {
+                    (tex_size - tx - 1) as u32
+                } else {
+                    tx as u32
+                }
             };
 
-            renderer.set_draw_color(color);
-
-            renderer.draw_line(
-                Point::new(x as i32, draw_start),
-                Point::new(x as i32, draw_end),
-            ).unwrap();
+            for y in draw_start..draw_end {
+                let d = (y * 256 - height * 128 + line_height * 128) as u32;
+                let tex_y = d * tex_size as u32 / line_height as u32 / 256;
+                let tex_pos = tex_size as u32 * tex_y + tex_x;
+                let color_i = textures[tex_num][tex_pos as usize];
+                let r = color_i >> 16 & 0xFF;
+                let g = color_i >> 8 & 0xFF;
+                let b = color_i & 0xFF;
+                let dist_mod = (perpwall_dist * 12.) as u32;
+                let color = Color::RGB(
+                    if r > dist_mod { (r - dist_mod) as u8 } else { 0 },
+                    if g > dist_mod { (g - dist_mod) as u8 } else { 0 },
+                    if b > dist_mod { (b - dist_mod) as u8 } else { 0 },
+                );
+                renderer.set_draw_color(color);
+                renderer.draw_point(Point::new(x, y)).unwrap();
+            }
         }
 
         let old_time = time;
