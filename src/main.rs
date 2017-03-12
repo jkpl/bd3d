@@ -95,14 +95,12 @@ fn main() {
 
         for x in 0i32..width {
             let camera_x = 2. * (x as f32) / (width as f32) - 1.;
-            let raypos_x = pos_x;
-            let raypos_y = pos_y;
             let raydir_x = dir_x + plane_x * camera_x;
             let raydir_y = dir_y + plane_y * camera_x;
 
             // which square are we in?
-            let mut map_x = raypos_x as i32;
-            let mut map_y = raypos_y as i32;
+            let mut map_x = pos_x as i32;
+            let mut map_y = pos_y as i32;
 
             // length of ray from one x or y-side to next x or y-side
             let deltadist_x = (1. + (raydir_y * raydir_y) / (raydir_x * raydir_x)).sqrt();
@@ -114,14 +112,14 @@ fn main() {
 
             // length of ray from current position to next x or y-side
             let mut sidedist_x = if raydir_x < 0. {
-                (raypos_x - (map_x as f32)) * deltadist_x
+                (pos_x - (map_x as f32)) * deltadist_x
             } else {
-                ((map_x as f32) + 1. - raypos_x) * deltadist_x
+                ((map_x as f32) + 1. - pos_x) * deltadist_x
             };
             let mut sidedist_y = if raydir_y < 0. {
-                (raypos_y - (map_y as f32)) * deltadist_y
+                (pos_y - (map_y as f32)) * deltadist_y
             } else {
-                ((map_y as f32) + 1. - raypos_y) * deltadist_y
+                ((map_y as f32) + 1. - pos_y) * deltadist_y
             };
 
             // perform DDA
@@ -148,9 +146,9 @@ fn main() {
             // Calculate distance projected on camera direction
             // (oblique distance will give fisheye effect!)
             let perpwall_dist = if side {
-                ((map_x as f32) - raypos_x + ((1 - step_x) as f32) / 2.) / raydir_x
+                ((map_x as f32) - pos_x + ((1 - step_x) as f32) / 2.) / raydir_x
             } else {
-                ((map_y as f32) - raypos_y + ((1 - step_y) as f32) / 2.) / raydir_y
+                ((map_y as f32) - pos_y + ((1 - step_y) as f32) / 2.) / raydir_y
             };
 
             // Calculate height of line to draw on screen
