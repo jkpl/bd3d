@@ -88,15 +88,15 @@ fn main() {
             let mut map_x = raypos_x as i32;
             let mut map_y = raypos_y as i32;
 
-            //length of ray from one x or y-side to next x or y-side
+            // length of ray from one x or y-side to next x or y-side
             let deltadist_x = (1. + (raydir_y * raydir_y) / (raydir_x * raydir_x)).sqrt();
             let deltadist_y = (1. + (raydir_x * raydir_x) / (raydir_y * raydir_y)).sqrt();
 
-            //what direction to step in x or y-direction (either +1 or -1)
+            // what direction to step in x or y-direction (either +1 or -1)
             let step_x = if raydir_x < 0. { -1 } else { 1 };
             let step_y = if raydir_y < 0. { -1 } else { 1 };
 
-            //length of ray from current position to next x or y-side
+            // length of ray from current position to next x or y-side
             let mut sidedist_x = if raydir_x < 0. {
                 (raypos_x - (map_x as f32)) * deltadist_x
             } else {
@@ -108,11 +108,11 @@ fn main() {
                 ((map_y as f32) + 1. - raypos_y) * deltadist_y
             };
 
-            //perform DDA
+            // perform DDA
             let mut hit = false;
             let mut side = false; // was a NS or a EW wall hit?
             while !hit {
-                //jump to next map square, OR in x-direction, OR in y-direction
+                // jump to next map square, OR in x-direction, OR in y-direction
                 if sidedist_x < sidedist_y {
                     sidedist_x += deltadist_x;
                     map_x += step_x;
@@ -123,7 +123,7 @@ fn main() {
                     side = false;
                 }
 
-                //Check if ray has hit a wall
+                // Check if ray has hit a wall
                 if world_map[map_x as usize][map_y as usize] > 0 {
                     hit = true;
                 }
@@ -137,10 +137,10 @@ fn main() {
                 ((map_y as f32) - raypos_y + ((1 - step_y) as f32) / 2.) / raydir_y
             };
 
-            //Calculate height of line to draw on screen
+            // Calculate height of line to draw on screen
             let line_height = (height as f32 / perpwall_dist) as i32;
 
-            //calculate lowest and highest pixel to fill in current stripe
+            // Calculate lowest and highest pixel to fill in current stripe
             let draw_start = cmp::max(-line_height / 2 + height / 2, 0);
             let draw_end   = cmp::min( line_height / 2 + height / 2, height - 1);
 
@@ -166,7 +166,7 @@ fn main() {
         time = timer.ticks();
         let frame_time = (time - old_time) as f32 / 1000.;
 
-        let move_speed = frame_time * 5.;
+        let move_speed = frame_time * 4.;
         let rot_speed = frame_time * 3.;
 
         event_pump.pump_events();
@@ -186,16 +186,36 @@ fn main() {
 
             // Down
             if kbstate.is_scancode_pressed(Scancode::S) {
-                if world_map[(pos_x + dir_x * move_speed) as usize][pos_y as usize] == 0 {
+                if world_map[(pos_x - dir_x * move_speed) as usize][pos_y as usize] == 0 {
                     pos_x -= dir_x * move_speed;
                 }
-                if world_map[pos_x as usize][(pos_y + dir_y * move_speed) as usize] == 0 {
+                if world_map[pos_x as usize][(pos_y - dir_y * move_speed) as usize] == 0 {
                     pos_y -= dir_y * move_speed;
                 }
             }
 
             // Left
             if kbstate.is_scancode_pressed(Scancode::A) {
+                if world_map[(pos_x - plane_x * move_speed) as usize][pos_y as usize] == 0 {
+                    pos_x -= plane_x * move_speed;
+                }
+                if world_map[pos_x as usize][(pos_y - plane_y * move_speed) as usize] == 0 {
+                    pos_y -= plane_y * move_speed;
+                }
+            }
+
+            // Right
+            if kbstate.is_scancode_pressed(Scancode::D) {
+                if world_map[(pos_x + plane_x * move_speed) as usize][pos_y as usize] == 0 {
+                    pos_x += plane_x * move_speed;
+                }
+                if world_map[pos_x as usize][(pos_y + plane_y * move_speed) as usize] == 0 {
+                    pos_y += plane_y * move_speed;
+                }
+            }
+
+            // Turn left
+            if kbstate.is_scancode_pressed(Scancode::J) {
                 //both camera direction and camera plane must be rotated
                 let old_dir_x = dir_x;
                 dir_x = dir_x * rot_speed.cos() - dir_y * rot_speed.sin();
@@ -205,8 +225,8 @@ fn main() {
                 plane_y = old_plane_x * rot_speed.sin() + plane_y * rot_speed.cos();
             }
 
-            // Right
-            if kbstate.is_scancode_pressed(Scancode::D) {
+            // Turn right
+            if kbstate.is_scancode_pressed(Scancode::L) {
                 //both camera direction and camera plane must be rotated
                 let old_dir_x = dir_x;
                 dir_x = dir_x * (-rot_speed).cos() - dir_y * (-rot_speed).sin();
