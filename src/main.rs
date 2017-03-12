@@ -74,10 +74,24 @@ fn main() {
     let mut running = true;
 
     while running {
-        renderer.set_draw_color(Color::RGB(0,50,0));
-        renderer.fill_rect(Rect::new(0, height / 2, width as u32, height as u32 / 2)).unwrap();
-        renderer.set_draw_color(Color::RGB(0,0,50));
-        renderer.fill_rect(Rect::new(0, 0, width as u32, height as u32 / 2)).unwrap();
+        // Draw ceiling and floor
+        for y in 0i32..(height as i32) / 2 {
+            // Ceiling
+            let ceil_color = cmp::max(cmp::min(150 - y, 255), 0);
+            renderer.set_draw_color(Color::RGB(0, 0, ceil_color as u8));
+            renderer.fill_rect(Rect::new(
+                0, y,
+                width as u32, 1
+            )).unwrap();
+
+            // Floor
+            let floor_color = cmp::max(cmp::min(y * 3 / 4, 255), 0);
+            renderer.set_draw_color(Color::RGB(0, floor_color as u8, 0));
+            renderer.fill_rect(Rect::new(
+                0, height / 2 + y,
+                width as u32, 1
+            )).unwrap();
+        };
 
         for x in 0i32..width {
             let camera_x = 2. * (x as f32) / (width as f32) - 1.;
@@ -147,13 +161,15 @@ fn main() {
             let draw_end   = cmp::min( line_height / 2 + height / 2, height - 1);
 
             let bright_mod = if side { 2 } else { 1 };
+            let dist_mod = cmp::min((perpwall_dist * 15.) as u32, 255);
+            let color_n = (255 - (dist_mod as u8)) / bright_mod;
 
             let color = match world_map[map_x as usize][map_y as usize] {
-                1 => Color::RGB(255 / bright_mod, 0, 0),
-                2 => Color::RGB(0, 255 / bright_mod, 0),
-                3 => Color::RGB(0, 0, 255 / bright_mod),
-                4 => Color::RGB(255 / bright_mod, 255 / bright_mod, 255 / bright_mod),
-                _ => Color::RGB(255 / bright_mod, 255 / bright_mod, 0),
+                1 => Color::RGB(color_n, 0, 0),
+                2 => Color::RGB(0, color_n, 0),
+                3 => Color::RGB(0, 0, color_n),
+                4 => Color::RGB(color_n, color_n, color_n),
+                _ => Color::RGB(color_n, color_n, 0),
             };
 
             renderer.set_draw_color(color);
@@ -169,7 +185,7 @@ fn main() {
         let frame_time = (time - old_time) as f32 / 1000.;
 
         let move_speed = frame_time * 4.;
-        let rot_speed = frame_time * 3.;
+        let rot_speed = frame_time * 2.;
 
         event_pump.pump_events();
 
