@@ -10,8 +10,8 @@ use sdl2::pixels::Color;
 use sdl2::rect::Point;
 
 fn main() {
-    let width: i32 = 1024;
-    let height: i32 = 768;
+    let width: i32 = 640;
+    let height: i32 = 480;
 
     let world_map = vec![
         vec![1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -41,11 +41,13 @@ fn main() {
     ];
 
     let sdl_context = sdl2::init().unwrap();
+
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
         .window("BD 3D", width as u32, height as u32)
         .position_centered()
+        .resizable()
         .build().unwrap();
 
     let mut renderer = window
@@ -53,6 +55,8 @@ fn main() {
         .accelerated()
         .present_vsync()
         .build().unwrap();
+
+    renderer.set_logical_size(width as u32, height as u32).unwrap();
 
     let mut timer = sdl_context.timer().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -69,9 +73,9 @@ fn main() {
 
     while running {
         renderer.set_draw_color(Color::RGB(0,50,0));
-        let _ = renderer.fill_rect(Rect::new(0, height / 2, width as u32, height as u32 / 2));
+        renderer.fill_rect(Rect::new(0, height / 2, width as u32, height as u32 / 2)).unwrap();
         renderer.set_draw_color(Color::RGB(0,0,50));
-        let _ = renderer.fill_rect(Rect::new(0, 0, width as u32, height as u32 / 2));
+        renderer.fill_rect(Rect::new(0, 0, width as u32, height as u32 / 2)).unwrap();
 
         for x in 0i32..width {
             let camera_x = 2. * (x as f32) / (width as f32) - 1.;
@@ -152,10 +156,10 @@ fn main() {
 
             renderer.set_draw_color(color);
 
-            let _ = renderer.draw_line(
+            renderer.draw_line(
                 Point::new(x as i32, draw_start),
                 Point::new(x as i32, draw_end),
-            );
+            ).unwrap();
         }
 
         let old_time = time;
